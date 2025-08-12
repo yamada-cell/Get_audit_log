@@ -1,3 +1,4 @@
+
 name: OneDrive Log Monitor
 
 on:
@@ -12,9 +13,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Set up PowerShell
-        uses: PowerShell/PowerShell@v1
 
       - name: Run OneDrive Log Script
         run: pwsh ./scripts/collect-onedrive-logs.ps1
