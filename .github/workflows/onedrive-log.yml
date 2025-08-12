@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v3
 
       - name: Run OneDrive Log Script
-        run: pwsh ./scripts/collect-onedrive-logs.ps1
+        run: pwsh ./scripts/get-onedrive-logs.ps1
         env:
           CLIENT_ID: ${{ secrets.CLIENT_ID }}
           CLIENT_SECRET: ${{ secrets.CLIENT_SECRET }}
