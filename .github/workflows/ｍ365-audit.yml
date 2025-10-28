@@ -1,0 +1,95 @@
+
+name: M365 Audit (Scheduled)
+
+on:
+  schedule:
+    # JST 09:05（= UTC 00:05）
+    - cron: '5 0 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: m365-audit
+  cancel-in-progress: true
+
+jobs:
+  run-audit:
+    runs-on: windows-latest
+
+    # Secrets/環境値の取り込み
+    env:
+      # Exchange Online app-only
+      EXO_APP_ID:            ${{ secrets.EXO_APP_ID }}         # 任意(非機密)だがSecrets化しても可
+      EXO_ORG:               ${{ secrets.EXO_ORG }}            # 任意(非機密)だが公開を避けたい場合はSecrets
+      EXO_CERT_THUMBPRINT:   ${{ secrets.EXO_CERT_THUMBPRINT }}# Thumbprint方式を使う場合のみ
+      EXO_PFX_BASE64:        ${{ secrets.EXO_PFX_BASE64 }}     # 必須（機密）
+      EXO_PFX_PASSWORD:      ${{ secrets.EXO_PFX_PASSWORD }}   # 必須（機密）
+
+      # PnP.PowerShell
+      PNP_TENANT:            ${{ secrets.PNP_TENANT }}         # 任意(非機密)
+      PNP_CLIENT_ID:         ${{ secrets.PNP_CLIENT_ID }}      # 任意(非機密)
+      PNP_PFX_BASE64:        ${{ secrets.PNP_PFX_BASE64 }}     # 必須（機密）
+      PNP_PFX_PASSWORD:      ${{ secrets.PNP_PFX_PASSWORD }}   # 必須（機密）
+      PNP_PFX_PATH:          C:\Secure\pnp_app.pfx             # スクリプト既定パスと揃える
+
+      # スクリプトパラメータ
+      SITE_URL:              ${{ secrets.SITE_URL }}           # 任意（公開を避けたいならSecrets）
+      FOLDER_PATH:           ${{ secrets.FOLDER_PATH }}        # 任意
+      WEBHOOK_URL:           ${{ secrets.WEBHOOK_URL }}        # 必須（機密）
+      THRESHOLD_COUNT:       ${{ secrets.THRESHOLD_COUNT }}    # 任意
+      THRESHOLD_SIZE_MB:     ${{ secrets.THRESHOLD_SIZE_MB }}  # 任意
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare secure folder
+        shell: pwsh
+        run: |
+          New-Item -Path 'C:\Secure' -ItemType Directory -ErrorAction SilentlyContinue | Out-Null
+
+      - name: Install required modules (EXO & PnP)
+        shell: pwsh
+        run: |
+          Set-PSRepository -Name 'PSGallery' -InstallationPolicy Trusted
+          Install-Module ExchangeOnlineManagement -Scope CurrentUser -Force   # EXO v2+
+          Install-Module PnP.PowerShell             -Scope CurrentUser -Force # PowerShell 7推奨
+
+      - name: Restore EXO certificate (to CurrentUser\My) and set path env
+        shell: pwsh
+        run: |
+          if (-not [string]::IsNullOrWhiteSpace($env:EXO_PFX_BASE64)) {
+            $exoBytes  = [Convert]::FromBase64String($env:EXO_PFX_BASE64)
+            $exoPath   = 'C:\Secure\exo_app.pfx'
+            [IO.File]::WriteAllBytes($exoPath, $exoBytes)
+            $exoSecure = ConvertTo-SecureString $env:EXO_PFX_PASSWORD -AsPlainText -Force
+            # Exchange OnlineのThumbprint接続を使うなら証明書ストアにインポート
+            Import-PfxCertificate -FilePath $exoPath -Password $exoSecure -CertStoreLocation Cert:\CurrentUser\My | Out-Null
+            # ファイル方式を使うときのため、環境変数にも渡す
+            echo "EXO_PFX_PATH=$exoPath" >> $env:GITHUB_ENV
+          }
+
+      - name: Restore PnP certificate file
+        shell: pwsh
+        run: |
+          $pnpBytes = [Convert]::FromBase64String($env:PNP_PFX_BASE64)
+          [IO.File]::WriteAllBytes($env:PNP_PFX_PATH, $pnpBytes)
+
+      - name: Run audit script (PowerShell 7)
+        shell: pwsh
+        run: |
+          # スクリプトのパス（リポジトリ構成に合わせて調整）
+          $script = Get-ChildItem -Recurse -Filter 'M365_Audit_Full_5_10_2_v1.5.ps1' | Select-Object -First 1
+          if (-not $script) { throw "Audit script not found." }
+
+          # EXOファイル方式を使うなら環境変数で渡す
+          if ($env:EXO_PFX_PATH) {
+            Write-Host "Using EXO certificate file: $env:EXO_PFX_PATH"
+          }
+          pwsh -File $script.FullName
+
+      - name: Upload temp folder (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: runner-temp
+          path: ${{ runner.temp }}
