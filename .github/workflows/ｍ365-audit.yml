@@ -78,7 +78,7 @@ jobs:
         shell: pwsh
         run: |
           # スクリプトのパス（リポジトリ構成に合わせて調整）
-          $script = Get-ChildItem -Recurse -Filter 'M365_Audit_Full_5_10_3_v1.5.ps1' | Select-Object -First 1
+          $script = Get-ChildItem -Recurse -Filter 'M365_Audit_Full_5_10_4_v1.5.ps1' | Select-Object -First 1
           if (-not $script) { throw "Audit script not found." }
 
           # EXOファイル方式を使うなら環境変数で渡す
