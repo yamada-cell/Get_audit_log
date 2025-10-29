@@ -34,7 +34,7 @@ $SiteUrl    = "https://nihontechnosystems.sharepoint.com/sites/msteams_5ff01b"
 $FolderPath = "Shared Documents/M365通知テスト用/ログ保存用フォルダ3"
 
 # 出力・閾値・Webhook
-#$OutputDir       = "C:\Users\山田辰徳\Desktop\log\audit_log"
+$OutputDir       = "C:\Users\山田辰徳\Desktop\log\audit_log"
 #$ThresholdCount  = 50
 #$ThresholdSizeMB = 10
 #$WebhookUrl      = "https://default694c9923d2f040fe9f48b75b4fc88e.4a.environment.api.powerplatform.com:443/powerautomate/automations/direct/workflows/37198d9ec32f44d0a0952952c57ec5f9/triggers/manual/paths/invoke?api-version=1&sp=%2Ftriggers%2Fmanual%2Frun&sv=1.0&sig=F041yno7ZL2MFsesMdk51_1P9M3TYtLAmdx2g6PAVq8"
