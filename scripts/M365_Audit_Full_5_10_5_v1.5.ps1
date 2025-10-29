@@ -186,13 +186,12 @@ function Parse-FileInfo {
 if (-not (Test-Path $OutputDir)) { New-Item -Path $OutputDir -ItemType Directory | Out-Null }
 
 # Exchange Online
-try {
-    Connect-ExchangeOnline -AppId $ExoAppId -CertificateThumbprint $ExoCertThumbprint -Organization $ExoOrganization -ShowBanner:$false
-} catch {
-    Write-Error "Exchange Online接続に失敗: $($_.Exception.Message)"
-    exit 1
-}
-
+#try {
+#    Connect-ExchangeOnline -AppId $ExoAppId -CertificateThumbprint $ExoCertThumbprint -Organization $ExoOrganization -ShowBanner:$false
+#} catch {
+#    Write-Error "Exchange Online接続に失敗: $($_.Exception.Message)"
+#    exit 1
+#}
 
 # Exchange Online（ファイル方式へ統一。Thumbprintはフォールバック）
 try {
