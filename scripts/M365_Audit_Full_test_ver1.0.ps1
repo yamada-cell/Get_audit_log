@@ -364,7 +364,7 @@ if ($parsed.Count -gt 0) {
                 Count       = $items.Count
                 TotalSizeMB = [Math]::Round(($sumBytes / 1MB), 2)
             }
-        } | Sort-Object -Property @{Expression='Count';Descending=$true}, @{Expression='TotalSizeMB';Descending=$true}, @{Expression='Operation';Descending=$false}
+        } | Sort-Object -Property @{Expression='Operation';Descending=$false}, @{Expression='Count';Descending=$true}, @{Expression='TotalSizeMB';Descending=$true}
 }
 
 # 集計CSVを保存＆アップロード
