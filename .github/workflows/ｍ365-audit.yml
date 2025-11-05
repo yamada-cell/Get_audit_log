@@ -4,7 +4,7 @@ name: M365 Audit (Scheduled)
 on:
   schedule:
     # JST 09:05（= UTC 00:05）
-    - cron: '45 0 * * *'
+    - cron: '45 23 * * *'
   workflow_dispatch:
 
 concurrency:
